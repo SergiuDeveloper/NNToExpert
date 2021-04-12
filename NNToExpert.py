@@ -4,6 +4,8 @@ from typing import List
 import numpy as np
 import tensorflow as tf
 from sklearn.tree import DecisionTreeClassifier, _tree
+from clips import Environment
+from io import TextIOWrapper
 
 
 class ContinuousSubdomain():
@@ -28,11 +30,26 @@ class Variable():
     def __init__(self, domain: Domain):
         self.domain: Domain = domain
         
+class Expert():
+    def __init__(self, clips_env: Environment):
+        self.__clips_env = clips_env
+        
+    def classify(self, input_vars: List[float]) -> int:
+        self.__clips_env.assert_string('(input_vars {})'.format(' '.join(str(var) for var in input_vars)))
+        self.__clips_env.run()
+        for fact in self.__clips_env.facts():
+            fact_text = str(fact)
+            if fact_text.startswith('(output_vars'):
+                output_vars_str = fact_text[len('(output_vars '):-1]
+                result = int(output_vars_str)
+        self.__clips_env.reset()
+        return result
+        
 class NNToExpert():
     @staticmethod
-    def extract_rules(nn: tf.keras.Model, variables: List[Variable]) -> List[str]:
+    def extract_rules(nn: tf.keras.Model, variables: List[Variable], output_file: TextIOWrapper = None) -> Expert:
         NNToExpert.rules_count = 0
-        NNToExpert.rules_text = []
+        NNToExpert.clips_env = Environment()
     
         variable_names = ['V{}'.format(i) for i in range(len(variables))]
         variables_domain_values = [variable.domain.values for variable in variables]
@@ -44,7 +61,14 @@ class NNToExpert():
         clf.fit(variables_domains_cartesian_product, predicted_values)
         NNToExpert.__tree_to_rules(clf, variable_names)
         
-        return NNToExpert.rules_text
+        if output_file is not None:
+            for rule in NNToExpert.clips_env.rules():
+                output_file.write(str(rule))
+                output_file.write('\n')
+                
+        NNToExpert.expert = Expert(NNToExpert.clips_env)
+        
+        return NNToExpert.expert
         
     @staticmethod
     def __tree_to_rules(clf, feature_names):
@@ -59,7 +83,7 @@ class NNToExpert():
             clips_input_vars = ['?{}'.format(feature_name) for feature_name in feature_names if feature_name != 'undefined']
             input_line = '(input_vars {})'.format(' '.join(map(str, sorted(clips_input_vars))))
             rule_text = '(defrule r{}\n\t{}\n{}=>\n\t(assert (output_vars {}))\n)\n'.format(NNToExpert.rules_count, input_line, current_rules_text, leaf_value)
-            NNToExpert.rules_text.append(rule_text)
+            NNToExpert.clips_env.build(rule_text)
                 
             NNToExpert.rules_count += 1
             return
