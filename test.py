@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from clips import Environment
-from rule_extraction import *
+from NNToExpert import *
 
 
 X_train = np.array([
@@ -27,7 +27,7 @@ nn.compile(
 nn.fit(X_train, y_train, epochs=30, batch_size=1, verbose=False)
 
 variable_domains = [Variable(DiscreteDomain([0, 1])), Variable(DiscreteDomain([0, 1]))]
-rules_text = NNToExpertHelper.extract_rules(nn, variable_domains)
+rules_text = NNToExpert.extract_rules(nn, variable_domains)
 with open('test.clp', 'w+') as output_file:
     output_file.write('\n'.join(rules_text))
 
