@@ -21,7 +21,7 @@ nn = tf.keras.Sequential([
 ])
 nn.compile(
     loss=tf.keras.losses.MSE,
-    optimizer=tf.keras.optimizers.SGD(learning_rate=0.6)
+    optimizer=tf.keras.optimizers.SGD(learning_rate=0.5)
 )
 nn.fit(X_train, y_train, epochs=2000, verbose=False)
 

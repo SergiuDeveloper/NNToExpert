@@ -23,7 +23,7 @@ class DiscreteDomain(Domain):
 class ContinuousDomain(Domain):
     def __init__(self, subdomains: List[ContinuousSubdomain]):
         subdomains_values = [subdomain.values for subdomain in subdomains]
-        values = list(itertools.chain.fromiterable(subdomains_values))
+        values = list(itertools.chain.from_iterable(subdomains_values))
         super().__init__(values)
 
 class Variable():
@@ -34,16 +34,19 @@ class Expert():
     def __init__(self, clips_env: Environment):
         self.__clips_env = clips_env
         
-    def classify(self, input_vars: List[float]) -> int:
-        self.__clips_env.assert_string('(input_vars {})'.format(' '.join(str(var) for var in input_vars)))
-        self.__clips_env.run()
-        for fact in self.__clips_env.facts():
-            fact_text = str(fact)
-            if fact_text.startswith('(output_vars'):
-                output_vars_str = fact_text[len('(output_vars '):-1]
-                result = int(output_vars_str)
-        self.__clips_env.reset()
-        return result
+    def classify(self, input_vars_list: List[List[float]]) -> List[int]:
+        results = []
+        for input_vars in input_vars_list:
+            self.__clips_env.assert_string('(input_vars {})'.format(' '.join(str(var) for var in input_vars)))
+            self.__clips_env.run()
+            for fact in self.__clips_env.facts():
+                fact_text = str(fact)
+                if fact_text.startswith('(output_vars'):
+                    output_vars_str = fact_text[len('(output_vars '):-1]
+                    result = int(output_vars_str)
+                    results.append(result)
+            self.__clips_env.reset()
+        return results
         
 class NNToExpert():
     @staticmethod
@@ -53,7 +56,7 @@ class NNToExpert():
     
         variable_names = ['V{}'.format(i) for i in range(len(variables))]
         variables_domain_values = [variable.domain.values for variable in variables]
-        variables_domains_cartesian_product = list(itertools.product(*variables_domain_values))
+        variables_domains_cartesian_product = np.array(list(itertools.product(*variables_domain_values)))
         predicted_values = nn.predict(variables_domains_cartesian_product)
         predicted_values = [int(round(predicted_value[0])) for predicted_value in predicted_values]
         
