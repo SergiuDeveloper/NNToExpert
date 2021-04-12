@@ -55,7 +55,7 @@ class NNToExpert():
         variables_domain_values = [variable.domain.values for variable in variables]
         variables_domains_cartesian_product = list(itertools.product(*variables_domain_values))
         predicted_values = nn.predict(variables_domains_cartesian_product)
-        predicted_values = [int(predicted_value[0] > 0.5) for predicted_value in predicted_values]
+        predicted_values = [int(round(predicted_value[0])) for predicted_value in predicted_values]
         
         clf = DecisionTreeClassifier()
         clf.fit(variables_domains_cartesian_product, predicted_values)
