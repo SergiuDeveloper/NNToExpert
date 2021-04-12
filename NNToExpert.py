@@ -14,7 +14,7 @@ class ContinuousSubdomain():
         
 class Domain(ABC):
     def __init__(self, values: List[float]):
-        self.values: List[float] = sorted(values)
+        self.values = sorted(values)
         
 class DiscreteDomain(Domain):
     def __init__(self, values: List[float]):
@@ -28,7 +28,7 @@ class ContinuousDomain(Domain):
 
 class Variable():
     def __init__(self, domain: Domain):
-        self.domain: Domain = domain
+        self.domain = domain
         
 class Expert():
     def __init__(self, clips_env: Environment):
@@ -81,7 +81,7 @@ class NNToExpert():
             leaf_value = np.argmax(clf.tree_.value[node])
 
             clips_input_vars = ['?{}'.format(feature_name) for feature_name in feature_names if feature_name != 'undefined']
-            input_line = '(input_vars {})'.format(' '.join(map(str, sorted(clips_input_vars))))
+            input_line = '(input_vars {})'.format(' '.join(map(str, sorted(list(set(clips_input_vars))))))
             rule_text = '(defrule r{}\n\t{}\n{}=>\n\t(assert (output_vars {}))\n)\n'.format(NNToExpert.rules_count, input_line, current_rules_text, leaf_value)
             NNToExpert.clips_env.build(rule_text)
                 

@@ -2,7 +2,7 @@ import tensorflow as tf
 from NNToExpert import *
 
 
-nn = tf.keras.models.load_model('models/and')
+nn = tf.keras.models.load_model('models/xor')
 
 variable_domains = [Variable(DiscreteDomain([0, 1])), Variable(DiscreteDomain([0, 1]))]
 
