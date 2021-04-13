@@ -10,7 +10,7 @@ from io import TextIOWrapper
 
 class ContinuousSubdomain():
     def __init__(self, domain_low: float, domain_high: float, closed_low: bool, closed_high: bool, step: float):
-        self.values = np.arange(domain_low + (step if not closed_low else 0), domain_high - (step if not closed_high else 0), step)
+        self.values = np.arange(domain_low + (step if not closed_low else 0), domain_high + (step if closed_high else 0), step)
         
 class Domain(ABC):
     def __init__(self, values: List[float]):
@@ -81,10 +81,10 @@ class NNToExpert():
     @staticmethod
     def __tree_to_rules_aux(clf, node, depth, feature_names, current_rules_text):
         if clf.tree_.feature[node] == _tree.TREE_UNDEFINED:
-            leaf_value = np.argmax(clf.tree_.value[node])
+            leaf_value = clf.classes_[np.argmax(clf.tree_.value[node])]
 
             clips_input_vars = ['?{}'.format(feature_name) for feature_name in feature_names if feature_name != 'undefined']
-            input_line = '(input_vars {})'.format(' '.join(map(str, sorted(list(set(clips_input_vars))))))
+            input_line = '(input_vars {})'.format(' '.join(map(str, sorted(list(set(clips_input_vars)))))) if len(clips_input_vars) > 0 else '(input_vars $?)'
             rule_text = '(defrule r{}\n\t{}\n{}=>\n\t(assert (output_vars {}))\n)\n'.format(NNToExpert.rules_count, input_line, current_rules_text, leaf_value)
             NNToExpert.clips_env.build(rule_text)
                 

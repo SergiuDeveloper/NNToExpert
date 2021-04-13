@@ -9,10 +9,10 @@ X_train = np.array([
     [1, 1]
 ])
 y_train = np.array([
-    [0],
-    [0],
-    [0],
-    [1]
+    0,
+    0,
+    0,
+    1
 ])
 
 nn = tf.keras.Sequential([
